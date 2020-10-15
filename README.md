@@ -1,4 +1,4 @@
-# assignment2 (Phan Gia Bao Le - s3688102)
+# Assignment2 (Phan Gia Bao Le - s3688102)
 
 # Requirement 4: Kernel Compilation Scripts 
   .config , 
