@@ -1,0 +1,20 @@
+#!/bin/bash
+trap "exit" SIGUSR1
+
+BEGIN_TIME=$(date "+%s")
+
+while true
+do
+    TEMP=$(vcgencmd measure_temp)
+    TEMP=${TEMP#temp=}
+    TEMP=${TEMP%\'C}
+    CLOCK_ARM=$(vcgencmd measure_clock arm)
+    CLOCK_ARM=${CLOCK_ARM#frequency(*)=}
+    VOLT=$(vcgencmd measure_volts)
+    VOLT=${VOLT#volt=}
+    VOLT=${VOLT%V}
+    NOW_TIME=$(date "+%s")
+    let USED_TIME=NOW_TIME-BEGIN_TIME
+    printf "%s\t%s\t%s\t%s\n" $USED_TIME $TEMP $CLOCK_ARM $VOLT &>> kernel_performance_data
+    sleep 5s
+done

@@ -1,0 +1,59 @@
+#!/bin/bash
+# For Raspberry Pi 4
+KERNEL=kernel7l
+# For Raspberry Pi 2/3
+#KERNEL=kernel7
+
+ID="ID-3688102"
+
+echo "Install necessary tools..."
+sudo apt install raspberrypi-kernel-headers build-essential bc git wget bison flex libssl-dev make
+printf "Done\n\n\n"
+echo "Clone necessary source code..."
+git clone --depth=1 https://github.com/raspberrypi/linux
+git clone https://github.com/s3688102/assignment2.git
+printf "Done\n\n\n"
+echo "Copy config to linux directory..."
+cp assignment2/.config linux/.config
+rm -rf assignment2
+printf "Done\n\n\n"
+
+rm -f kernel_performance_data
+chmod +x performance_monitor_script
+chmod +x led_script
+
+echo "Backup boot..."
+sudo tar zcf boot_backup.tar.gz /boot
+printf "Done\n\n\n"
+
+echo "Clean old build..."
+cd linux 
+make clean
+cd ..
+printf "Done\n\n\n"
+
+./performance_monitor_script &
+./led_script &
+
+echo "Start to build kernel..."
+cd linux
+sed -i "s/EXTRAVERSION =/EXTRAVERSION=${ID}/" Makefile
+make -j4 zImage modules dtbs
+
+PID=`ps gaux | grep performance_monitor_script | grep -v grep | awk '{print $2}'`
+kill -USR1 $PID
+PID=`ps gaux | grep led_script | grep -v grep | awk '{print $2}'`
+kill -USR2 $PID
+printf "Done\n\n\n"
+
+echo "Start to install kernel..."
+sudo make modules_install
+sudo cp arch/arm/boot/dts/*.dtb /boot/
+sudo cp arch/arm/boot/dts/overlays/*.dtb* /boot/overlays/
+sudo cp arch/arm/boot/dts/overlays/README /boot/overlays/
+sudo cp arch/arm/boot/zImage /boot/$KERNEL.img
+printf "Done\n\n\n"
+
+echo 'Reboot after 5 seconds'
+sleep 5s
+sudo reboot

@@ -1,0 +1,18 @@
+#!/bin/bash
+echo gpio | sudo tee /sys/class/leds/led0/trigger > /dev/null
+trap "echo mmc0 | sudo tee /sys/class/leds/led0/trigger > /dev/null && exit" SIGUSR2
+
+one_hundred=100
+one=1
+while true
+do
+    cpu_us=`vmstat | awk '{print $13}' | sed -n '$p'`
+    cpu_sy=`vmstat | awk '{print $14}' | sed -n '$p'`
+    cpu_sum=$(($cpu_us+$cpu_sy))
+    on_time=$(awk 'BEGIN{printf '$cpu_sum'/'$one_hundred'}')
+    off_time=$(awk 'BEGIN{printf '$one'-'$on_time'}')
+    echo 1 | sudo tee /sys/class/leds/led0/brightness > /dev/null
+    sleep $on_time
+    echo 0 | sudo tee /sys/class/leds/led0/brightness > /dev/null
+    sleep $off_time
+done
